@@ -41,8 +41,8 @@ struct config{
  */
 
 struct cache{
-    int validbit;
-    int dirtybit;
+    int validbit=0;
+    int dirtybit=0;
     string tag;
 };
 
@@ -189,6 +189,8 @@ int main(){
             TagL2=Address.substr(0,CACHE_L2.tagL2);
             
             int waycount=0;     //using for finding tag in each way
+            int evictCounterL1=0; //round robin counter
+            int evictCounterL2=0;
             bitset<32> L1temindex;
             bitset<32> L2temindex;
             long int L1index;
@@ -208,8 +210,10 @@ int main(){
             }
             L2index=L2temindex.to_ulong();      //long int L2index
 
-            
-            
+            //std::cout<<cacheL1[1][1].tag;
+            std::cout<<cacheL1[1][1].validbit;
+            std::cout<<cacheL1[1][1].dirtybit;
+
             
             // access the L1 and L2 Cache according to the trace;
             if (accesstype.compare("R")==0)
@@ -240,11 +244,72 @@ int main(){
                 }
                 
                 
+                //if miss
+                waycount=0;
+                if (L1AcceState==RM and L2AcceState==RH){           //L1 miss, L2 hit
+                    while(waycount != cacheconfig.L1setsize){
+                        if(cacheL1[L1index][waycount].validbit==0){
+                            cacheL1[L1index][waycount].tag=TagL1;
+                            cacheL1[L1index][waycount].validbit=1;
+                            
+                            break;
+                        }
+                        waycount+=1;
+                    }
+                    
+                    if(waycount==cacheconfig.L1setsize){            //all ways are full, evict using round robin
+                        if(evictCounterL1==cacheconfig.L1setsize){
+                            evictCounterL1=0;                       //roll over
+                        }
+                        cacheL1[L1index][evictCounterL1].tag=TagL1;
+                        cacheL1[L1index][evictCounterL1].dirtybit=0;
+                        
+                        evictCounterL1+=1;
+                    }
+                }
                 
                 
-                
-                
-                
+                if (L1AcceState==RM and L2AcceState==RM){           //L1 miss, L2 miss
+                    while(waycount != cacheconfig.L1setsize){           //L1 saving
+                        if(cacheL1[L1index][waycount].validbit==0){
+                            cacheL1[L1index][waycount].tag=TagL1;
+                            cacheL1[L1index][waycount].validbit=1;
+                            break;
+                        }
+                        waycount+=1;
+                    }
+                    
+                    if(waycount==cacheconfig.L1setsize){            //all ways are full, evict using round robin
+                        if(evictCounterL1==cacheconfig.L1setsize){
+                            evictCounterL1=0;                       //roll over
+                        }
+                        cacheL1[L1index][evictCounterL1].tag=TagL1;
+                        cacheL1[L1index][evictCounterL1].dirtybit=0;
+                        
+                        evictCounterL1+=1;
+                    }
+                   
+                                                                        //L2 saving
+                    waycount=0;                                         //reset waycount
+                    while(waycount != cacheconfig.L2setsize){
+                        if(cacheL2[L2index][waycount].validbit==0){
+                            cacheL2[L2index][waycount].tag=TagL2;
+                            cacheL2[L2index][waycount].validbit=1;
+                            break;
+                        }
+                        waycount+=1;
+                    }
+                    
+                    if(waycount==cacheconfig.L2setsize){            //all ways are full, evict using round robin
+                        if(evictCounterL2==cacheconfig.L2setsize){
+                            evictCounterL2=0;                       //roll over
+                        }
+                        cacheL2[L2index][evictCounterL2].tag=TagL2;
+                        cacheL2[L2index][evictCounterL2].dirtybit=0;
+                        
+                        evictCounterL2+=1;
+                    }
+                }
                 
                 
                 
