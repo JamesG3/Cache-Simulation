@@ -181,6 +181,9 @@ int main(){
             string TagL2;
 
             
+            L1AcceState=0;      //reset AcceState for every line
+            L2AcceState=0;
+            
             
             TagL1=Address.substr(0,CACHE_L1.tagL1);
             TagL2=Address.substr(0,CACHE_L2.tagL2);
@@ -216,6 +219,31 @@ int main(){
                 // read access to the L1 Cache,
                 //  and then L2 (if required),
                 //  update the L1 and L2 access state variable;
+                while(waycount!=cacheconfig.L1setsize){
+                    if (TagL1==cacheL1[L1index][waycount].tag and cacheL1[L1index][waycount].validbit==1){
+                        L1AcceState=RH;
+                    }
+                    waycount+=1;
+                }
+                if(L1AcceState==0){
+                    L1AcceState=RM;
+                    waycount=0;
+                    while(waycount!=cacheconfig.L2setsize){
+                        if(TagL2==cacheL2[L2index][waycount].tag and cacheL2[L2index][waycount].validbit==1){
+                            L2AcceState=RH;
+                        }
+                        waycount+=1;
+                    }
+                    if(L2AcceState==0){
+                        L2AcceState=RM;
+                    }
+                }
+                
+                
+                
+                
+                
+                
                 
                 
                 
@@ -233,13 +261,30 @@ int main(){
                 
                 
                 while(waycount!=cacheconfig.L1setsize){
-                    if (TagL1==cacheL1[L1index][waycount].tag){  //it's a write hit
-                        
-                    
+                    if (TagL1==cacheL1[L1index][waycount].tag and cacheL1[L1index][waycount].validbit==1){  //it's a write hit
+                        L1AcceState = WH;
+                        cacheL1[L1index][waycount].dirtybit=1;   //write a new data, set dirty bit to 1
+                        break;
                     }
                     waycount+=1;
                 }
                 
+                
+                if(L1AcceState==0){     //if L1 write miss, access L2
+                    L1AcceState=WM;
+                    waycount=0;         //reset waycount
+                    while(waycount!=cacheconfig.L2setsize){
+                        if(TagL2==cacheL2[L2index][waycount].tag and cacheL2[L2index][waycount].validbit==1){
+                            L2AcceState=WH;
+                            cacheL2[L2index][waycount].dirtybit=1;
+                            break;
+                        }
+                        waycount+=1;
+                    }
+                    if (L2AcceState==0){
+                        L2AcceState=WM;
+                    }
+                }
                 
                 
             }
