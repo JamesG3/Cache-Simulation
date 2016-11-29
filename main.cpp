@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <cmath>
 #include <bitset>
-
+//test
 using namespace std;
 //access state:
 #define NA 0 // no action
