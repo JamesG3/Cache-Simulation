@@ -60,14 +60,20 @@ public:
         int blocksize=block;
         int numass=associativity;
         int cachesize=cache;
-        int blockNum=0;
+        //int blockNum=0;
         
         offsetL1 = log2(blocksize);
         
-        indexL1=(log2(cachesize)+10)-log2(numass)-offsetL1;
-        
+        if(associativity==0){           //if fully associative
+            indexL1=0;
+        }
+        else{
+            indexL1=(log2(cachesize)+10)-log2(numass)-offsetL1;     //+10 -> KB
+        }
         tagL1 = 32-offsetL1-indexL1;
         
+        
+        /*
         int aa = (log2(cachesize)+10)-offsetL1;
         blockNum = pow(2,aa);
         //int tagSize=pow(2,tagL1);
@@ -85,6 +91,7 @@ public:
         for (int i=0;i<indInd;i++){
             indexArray[i]=i;
         }
+        */
     }
     
     void initalL2(int b,int na, int c){
@@ -94,7 +101,12 @@ public:
 
         offsetL2 = log2(blocksize);
         
+        if(na==0){                  //if L2 fully associative
+            indexL2=0;
+        }
+        else{
         indexL2=(log2(cachesize)+10)-log2(numass)-offsetL2;
+        }
         
         tagL2 = 32-offsetL2-indexL2;
         
@@ -134,6 +146,15 @@ int main(){
     CACHE_L1.initalL1(cacheconfig.L1blocksize,cacheconfig.L1setsize, cacheconfig.L1size);
     CACHE_L2.initalL2(cacheconfig.L2blocksize,cacheconfig.L2setsize, cacheconfig.L2size);
     
+    
+    if(cacheconfig.L1setsize==0){       //if L1 fully-associative
+        cacheconfig.L1setsize=log2(cacheconfig.L1size)+10 - CACHE_L1.offsetL1;
+    }
+    if(cacheconfig.L2setsize==0){       //if L2 fully-associative
+        cacheconfig.L2setsize=log2(cacheconfig.L2size)+10 - CACHE_L2.offsetL2;
+    }
+    
+    
     //2d vector for saving tags
     vector<vector <string> > cacheL1_Tag(pow(2,CACHE_L1.indexL1) ,vector<string>(cacheconfig.L1setsize));
     vector<vector <string> > cacheL2_Tag(pow(2,CACHE_L2.indexL2) ,vector<string>(cacheconfig.L2setsize));
@@ -160,7 +181,7 @@ int main(){
     ofstream tracesout;
     string outname;
     //outname = string(argv[2]) + ".out";
-    outname = "Lab2.out";
+    outname = "/Users/gpz/Desktop/Lab2New/Lab2New/traceout.txt";
     //traces.open(argv[2]);
     traces.open("/Users/gpz/Desktop/Lab2New/Lab2New/trace.txt");
     tracesout.open(outname.c_str());
@@ -194,7 +215,6 @@ int main(){
             //需要检查tag是不是正确的位数
             
             
-            
             int waycount=0;     //using for finding tag in each way
             bitset<32> L1temindex;
             bitset<32> L2temindex;
@@ -214,7 +234,6 @@ int main(){
                 i2+=1;
             }
             L2index=L2temindex.to_ulong();      //long int L2index
-
 
             
             // access the L1 and L2 Cache according to the trace;
@@ -313,7 +332,7 @@ int main(){
                         cacheL2_evictcounter[L2index]+=1;
                     }
                 }
-                
+              
                 
                 
             }
@@ -355,7 +374,6 @@ int main(){
                 
                 
             }
-            
             
             
             tracesout<< L1AcceState << " " << L2AcceState << endl;  // Output hit/miss results for L1 and L2 to the output file;
