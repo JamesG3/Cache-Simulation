@@ -74,38 +74,38 @@ public:
         
         
         /*
-         int aa = (log2(cachesize)+10)-offsetL1;
-         blockNum = pow(2,aa);
-         //int tagSize=pow(2,tagL1);
-         
-         tagVector.resize(blockNum);
-         
-         int offInd=pow(2,tagL1);
-         int offArray[offInd];
-         for (int i=0;i<offInd;i++){
-         offArray[i]=i;
-         }
-         
-         int indInd=pow(2,indexL1);
-         int indexArray[indInd];
-         for (int i=0;i<indInd;i++){
-         indexArray[i]=i;
-         }
-         */
+        int aa = (log2(cachesize)+10)-offsetL1;
+        blockNum = pow(2,aa);
+        //int tagSize=pow(2,tagL1);
+        
+        tagVector.resize(blockNum);
+        
+        int offInd=pow(2,tagL1);
+        int offArray[offInd];
+        for (int i=0;i<offInd;i++){
+            offArray[i]=i;
+        }
+        
+        int indInd=pow(2,indexL1);
+        int indexArray[indInd];
+        for (int i=0;i<indInd;i++){
+            indexArray[i]=i;
+        }
+        */
     }
     
     void initalL2(int b,int na, int c){
         int blocksize=b;
         int numass=na;
         int cachesize=c;
-        
+
         offsetL2 = log2(blocksize);
         
         if(na==0){                  //if L2 fully associative
             indexL2=0;
         }
         else{
-            indexL2=(log2(cachesize)+10)-log2(numass)-offsetL2;
+        indexL2 = (log2(cachesize)+10)-log2(numass)-offsetL2;
         }
         
         tagL2 = 32-offsetL2-indexL2;
@@ -117,7 +117,7 @@ public:
 //int main(int argc, char* argv[]){
 int main(){
     
-    
+
     config cacheconfig;
     ifstream cache_params;
     string dummyLine;
@@ -147,38 +147,38 @@ int main(){
     CACHE_L2.initalL2(cacheconfig.L2blocksize,cacheconfig.L2setsize, cacheconfig.L2size);
     
     
-    if(cacheconfig.L1setsize==0){       //if L1 fully-associative
-        cacheconfig.L1setsize=log2(cacheconfig.L1size)+10 - CACHE_L1.offsetL1;      //reset setsize to max
-    }                                                                               //bits of L1setsize supposed to use
-    if(cacheconfig.L2setsize==0){       //if L2 fully-associative
-        cacheconfig.L2setsize=log2(cacheconfig.L2size)+10 - CACHE_L2.offsetL2;
+    if(cacheconfig.L1setsize == 0){       //if L1 fully-associative
+        cacheconfig.L1setsize = log2(cacheconfig.L1size)+10 - CACHE_L1.offsetL1;
+        cacheconfig.L1setsize = pow(2, cacheconfig.L1setsize);
     }
+    if(cacheconfig.L2setsize == 0){       //if L2 fully-associative
+        cacheconfig.L2setsize = log2(cacheconfig.L2size)+10 - CACHE_L2.offsetL2;
+        cacheconfig.L2setsize = pow(2, cacheconfig.L2setsize);
+    }
+
     
     
-    //2-D vector for saving tags
-    vector<vector <string> > cacheL1_Tag(pow(2, CACHE_L1.indexL1) ,vector<string>(pow(2, cacheconfig.L1setsize)));
-    vector<vector <string> > cacheL2_Tag(pow(2, CACHE_L2.indexL2) ,vector<string>(pow(2, cacheconfig.L2setsize)));
+    //2d vector for saving tags
+    vector<vector <string> > cacheL1_Tag(pow(2,CACHE_L1.indexL1) ,vector<string>(cacheconfig.L1setsize));
+    vector<vector <string> > cacheL2_Tag(pow(2,CACHE_L2.indexL2) ,vector<string>(cacheconfig.L2setsize));
     
-    //number of tags should as same as the number of VD
-    //2-D vector for saving valid bits and dirty bits, VD[0] is valid bit, VD[1] is dirty bit
-    vector<vector <bitset<2>> > cacheL1_VD(pow(2, CACHE_L1.indexL1) ,vector<bitset<2>>(pow(2, cacheconfig.L1setsize)));
-    vector<vector <bitset<2>> > cacheL2_VD(pow(2, CACHE_L2.indexL2) ,vector<bitset<2>>(pow(2, cacheconfig.L2setsize)));
+   
     
-    
-    
-    //vector for saving evict counter (round robin) _ index version
-    //vector<int> cacheL1_evictcounter;
-    //vector<int> cacheL2_evictcounter;
-    //cacheL1_evictcounter.resize(pow(2,CACHE_L1.indexL1));
-    //cacheL2_evictcounter.resize(pow(2,CACHE_L2.indexL2));
+    //2d vector for saving valid bits and dirty bits, VD[0] is valid bit, VD[1] is dirty bit
+    vector<vector <bitset<2>> > cacheL1_VD(pow(2,CACHE_L1.indexL1) ,vector<bitset<2>>(cacheconfig.L1setsize));
+    vector<vector <bitset<2>> > cacheL2_VD(pow(2,CACHE_L2.indexL2) ,vector<bitset<2>>(cacheconfig.L2setsize));
     
     
-    int cacheL1_evictcounter=0;         //eviction counter (round robin) _ cache version
-    int cacheL2_evictcounter=0;
+    
+    //vector for saving evict counter (round robin)
+    vector<int> cacheL1_evictcounter;
+    vector<int> cacheL2_evictcounter;
+    cacheL1_evictcounter.resize(pow(2,CACHE_L1.indexL1));
+    cacheL2_evictcounter.resize(pow(2,CACHE_L2.indexL2));
     
     
-    int L1AcceState =0; // L1 access state variable, can be one of NA, RH, RM, WH, WM;
-    int L2AcceState =0; // L2 access state variable, can be one of NA, RH, RM, WH, WM;
+    int L1AcceState = 0; // L1 access state variable, can be one of NA, RH, RM, WH, WM;
+    int L2AcceState = 0; // L2 access state variable, can be one of NA, RH, RM, WH, WM;
     
     
     ifstream traces;
@@ -195,7 +195,7 @@ int main(){
     string xaddr;       // the address from the memory trace store in hex;
     unsigned int addr;  // the address from the memory trace store in unsigned int;
     bitset<32> accessaddr; // the address from the memory trace store in the bitset;
-    //this is where the loop begins
+    
     if (traces.is_open()&&tracesout.is_open()){
         while (getline (traces,line)){   // read mem access file and access Cache
             
@@ -205,11 +205,11 @@ int main(){
             saddr >> std::hex >> addr;
             accessaddr = bitset<32> (addr);
             
-            
+        
             string Address=accessaddr.to_string();
             string TagL1;
             string TagL2;
-            
+
             
             L1AcceState=0;      //reset AcceState for every line
             L2AcceState=0;
@@ -228,18 +228,18 @@ int main(){
             int i1=0;           //a counter using for taking index part out of address
             int i2=0;
             
-            while(i1!=CACHE_L1.indexL1){
-                L1temindex[i1]=accessaddr[i1+CACHE_L1.offsetL1];
-                i1 += 1;
+            while(i1 != CACHE_L1.indexL1){
+                L1temindex[i1] = accessaddr[i1+CACHE_L1.offsetL1];
+                i1+=1;
             }
             L1index=L1temindex.to_ulong();      //long int L1index
             
-            while(i2!=CACHE_L2.indexL2){
+            while(i2 != CACHE_L2.indexL2){
                 L2temindex[i2]=accessaddr[i2+CACHE_L2.offsetL2];
-                i2 += 1;
+                i2+=1;
             }
             L2index=L2temindex.to_ulong();      //long int L2index
-            
+
             
             // access the L1 and L2 Cache according to the trace;
             if (accesstype.compare("R")==0)
@@ -257,7 +257,7 @@ int main(){
                     }
                     waycount+=1;
                 }
-                if(L1AcceState == 0){     //if accestate not change, it's a read miss, then access L2
+                if(L1AcceState==0){     //if accestate not change, it's a read miss, then access L2
                     L1AcceState=RM;
                     waycount=0;         //reset counter
                     while(waycount != cacheconfig.L2setsize){
@@ -267,7 +267,7 @@ int main(){
                         }
                         waycount+=1;
                     }
-                    if(L2AcceState == 0){
+                    if(L2AcceState==0){
                         L2AcceState=RM;
                     }
                 }
@@ -286,15 +286,15 @@ int main(){
                         waycount+=1;
                     }
                     
-                    if(waycount==cacheconfig.L1setsize){            //all ways are full, evict using round robin
-                        if(cacheL1_evictcounter==cacheconfig.L1setsize){
-                            cacheL1_evictcounter=0;                       //roll over
+                    if(waycount == cacheconfig.L1setsize){            //all ways are full, evict using round robin
+                        if(cacheL1_evictcounter[L1index] == cacheconfig.L1setsize){
+                            cacheL1_evictcounter[L1index]=0;                       //roll over
                         }
-                        cacheL1_Tag[L1index][cacheL1_evictcounter]=TagL1;  //save tag to L1[index][evictcounter]
+                        cacheL1_Tag[L1index][cacheL1_evictcounter[L1index]]=TagL1;  //save tag to L1[index][evictcounter]
                         
-                        cacheL1_VD[L1index][cacheL1_evictcounter][1]=0;    //set the dirty bit to 0
+                        cacheL1_VD[L1index][cacheL1_evictcounter[L1index]][1]=0;    //modify the dirty bit to 0
                         
-                        cacheL1_evictcounter += 1;
+                        cacheL1_evictcounter[L1index]+=1;
                     }
                 }
                 
@@ -309,15 +309,15 @@ int main(){
                     }
                     
                     if(waycount==cacheconfig.L1setsize){            //all ways are full, evict using round robin
-                        if(cacheL1_evictcounter == cacheconfig.L1setsize){
-                            cacheL1_evictcounter = 0;                       //roll over
+                        if(cacheL1_evictcounter[L1index] == cacheconfig.L1setsize){
+                            cacheL1_evictcounter[L1index]=0;                       //roll over
                         }
-                        cacheL1_Tag[L1index][cacheL1_evictcounter] = TagL1;
-                        cacheL1_VD[L1index][cacheL1_evictcounter][1] = 0;   //set dirty bit to 0
-                        cacheL1_evictcounter += 1;
+                        cacheL1_Tag[L1index][cacheL1_evictcounter[L1index]]=TagL1;
+                        cacheL1_VD[L1index][cacheL1_evictcounter[L1index]][1]=0;
+                        cacheL1_evictcounter[L1index]+=1;
                     }
-                    
-                    //L2 saving
+                   
+                                                                        //L2 saving
                     waycount=0;                                         //reset waycount
                     while(waycount != cacheconfig.L2setsize){
                         if(cacheL2_VD[L2index][waycount][0]==0){
@@ -328,16 +328,16 @@ int main(){
                         waycount+=1;
                     }
                     
-                    if(waycount==cacheconfig.L2setsize){            //all ways are full, evict using round robin
-                        if(cacheL2_evictcounter == cacheconfig.L2setsize){
-                            cacheL2_evictcounter = 0;                       //roll over
+                    if(waycount == cacheconfig.L2setsize){            //all ways are full, evict using round robin
+                        if(cacheL2_evictcounter[L2index] == cacheconfig.L2setsize){
+                            cacheL2_evictcounter[L2index]=0;                       //roll over
                         }
-                        cacheL2_Tag[L2index][cacheL2_evictcounter] = TagL2;
-                        cacheL2_VD[L2index][cacheL2_evictcounter][2] = 0;
-                        cacheL2_evictcounter += 1;
+                        cacheL2_Tag[L2index][cacheL2_evictcounter[L2index]]=TagL2;
+                        cacheL2_VD[L2index][cacheL2_evictcounter[L2index]][2]=0;
+                        cacheL2_evictcounter[L2index]+=1;
                     }
                 }
-                
+              
                 
                 
             }
@@ -350,7 +350,7 @@ int main(){
                 //update the L1 and L2 access state variable;
                 
                 
-                while(waycount != cacheconfig.L1setsize){
+                while(waycount!=cacheconfig.L1setsize){
                     if (TagL1 == cacheL1_Tag[L1index][waycount] and cacheL1_VD[L1index][waycount][0] == 1){
                         //it's a write hit
                         L1AcceState = WH;
