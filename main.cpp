@@ -23,8 +23,6 @@ using namespace std;
 #define WM 4 // write miss
 
 
-
-
 struct config{
     int L1blocksize;
     int L1setsize;
@@ -50,7 +48,6 @@ public:
     int tagL2;  //size of block
     int indexL2;     //number of way
     int offsetL2;   //size of cache
-    //vector<bitset<32>> tagVector;
     
     CACHE(){
         
@@ -60,7 +57,6 @@ public:
         int blocksize=block;
         int numass=associativity;
         int cachesize=cache;
-        //int blockNum=0;
         
         offsetL1 = log2(blocksize);
         
@@ -72,26 +68,6 @@ public:
         }
         tagL1 = 32-offsetL1-indexL1;
         
-        
-        /*
-        int aa = (log2(cachesize)+10)-offsetL1;
-        blockNum = pow(2,aa);
-        //int tagSize=pow(2,tagL1);
-        
-        tagVector.resize(blockNum);
-        
-        int offInd=pow(2,tagL1);
-        int offArray[offInd];
-        for (int i=0;i<offInd;i++){
-            offArray[i]=i;
-        }
-        
-        int indInd=pow(2,indexL1);
-        int indexArray[indInd];
-        for (int i=0;i<indInd;i++){
-            indexArray[i]=i;
-        }
-        */
     }
     
     void initalL2(int b,int na, int c){
@@ -117,7 +93,6 @@ public:
 //int main(int argc, char* argv[]){
 int main(){
     
-
     config cacheconfig;
     ifstream cache_params;
     string dummyLine;
@@ -125,12 +100,12 @@ int main(){
     cache_params.open("/Users/gpz/Desktop/Lab2New/Lab2New/cacheconfig.txt");
     while(!cache_params.eof())  // read config file
     {
-        cache_params>>dummyLine;
+        cache_params>>dummyLine;                    //using for jumping the "L1" line
         cache_params>>cacheconfig.L1blocksize;
         cache_params>>cacheconfig.L1setsize;
         cache_params>>cacheconfig.L1size;
         
-        cache_params>>dummyLine;
+        cache_params>>dummyLine;                    //using for jumping the "L2" line
         cache_params>>cacheconfig.L2blocksize;
         cache_params>>cacheconfig.L2setsize;
         cache_params>>cacheconfig.L2size;
@@ -148,8 +123,8 @@ int main(){
     
     
     if(cacheconfig.L1setsize == 0){       //if L1 fully-associative
-        cacheconfig.L1setsize = log2(cacheconfig.L1size)+10 - CACHE_L1.offsetL1;
-        cacheconfig.L1setsize = pow(2, cacheconfig.L1setsize);
+        cacheconfig.L1setsize = log2(cacheconfig.L1size)+10 - CACHE_L1.offsetL1;       //add 10 means KB
+        cacheconfig.L1setsize = pow(2, cacheconfig.L1setsize);              //calculate the fully setsize
     }
     if(cacheconfig.L2setsize == 0){       //if L2 fully-associative
         cacheconfig.L2setsize = log2(cacheconfig.L2size)+10 - CACHE_L2.offsetL2;
@@ -162,11 +137,10 @@ int main(){
     vector<vector <string> > cacheL1_Tag(pow(2,CACHE_L1.indexL1) ,vector<string>(cacheconfig.L1setsize));
     vector<vector <string> > cacheL2_Tag(pow(2,CACHE_L2.indexL2) ,vector<string>(cacheconfig.L2setsize));
     
-   
     
     //2d vector for saving valid bits and dirty bits, VD[0] is valid bit, VD[1] is dirty bit
-    vector<vector <bitset<2>> > cacheL1_VD(pow(2,CACHE_L1.indexL1) ,vector<bitset<2>>(cacheconfig.L1setsize));
-    vector<vector <bitset<2>> > cacheL2_VD(pow(2,CACHE_L2.indexL2) ,vector<bitset<2>>(cacheconfig.L2setsize));
+    vector<vector <bitset<2> > > cacheL1_VD(pow(2,CACHE_L1.indexL1) ,vector<bitset<2> >(cacheconfig.L1setsize));
+    vector<vector <bitset<2> > > cacheL2_VD(pow(2,CACHE_L2.indexL2) ,vector<bitset<2> >(cacheconfig.L2setsize));
     
     
     
@@ -205,11 +179,10 @@ int main(){
             saddr >> std::hex >> addr;
             accessaddr = bitset<32> (addr);
             
-        
             string Address=accessaddr.to_string();
             string TagL1;
             string TagL2;
-
+            
             
             L1AcceState=0;      //reset AcceState for every line
             L2AcceState=0;
@@ -217,22 +190,20 @@ int main(){
             
             TagL1=Address.substr(0,CACHE_L1.tagL1);
             TagL2=Address.substr(0,CACHE_L2.tagL2);
-            //需要检查tag是不是正确的位数
-            
             
             int waycount=0;     //using for finding tag in each way
             bitset<32> L1temindex;
             bitset<32> L2temindex;
             long int L1index;
             long int L2index;
-            int i1=0;           //a counter using for taking index part out of address
+            int i1=0;           //a counter using for taking index part out of provided address
             int i2=0;
             
             while(i1 != CACHE_L1.indexL1){
                 L1temindex[i1] = accessaddr[i1+CACHE_L1.offsetL1];
                 i1+=1;
             }
-            L1index=L1temindex.to_ulong();      //long int L1index
+            L1index=L1temindex.to_ulong();      //translate index to long int L1index
             
             while(i2 != CACHE_L2.indexL2){
                 L2temindex[i2]=accessaddr[i2+CACHE_L2.offsetL2];
@@ -272,7 +243,7 @@ int main(){
                     }
                 }
                 
-                
+
                 //if miss
                 waycount=0;
                 if (L1AcceState==RM and L2AcceState==RH){           //L1 miss, L2 hit
@@ -338,9 +309,8 @@ int main(){
                     }
                 }
               
-                
-                
             }
+            
             else
                 //Write
             {
@@ -376,7 +346,6 @@ int main(){
                         L2AcceState=WM;
                     }
                 }
-                
                 
             }
             
