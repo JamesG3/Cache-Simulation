@@ -148,21 +148,21 @@ int main(){
     
     
     if(cacheconfig.L1setsize==0){       //if L1 fully-associative
-        cacheconfig.L1setsize=log2(cacheconfig.L1size)+10 - CACHE_L1.offsetL1;
-    }
+        cacheconfig.L1setsize=log2(cacheconfig.L1size)+10 - CACHE_L1.offsetL1;      //reset setsize to max
+    }                                                                               //bits of L1setsize supposed to use
     if(cacheconfig.L2setsize==0){       //if L2 fully-associative
         cacheconfig.L2setsize=log2(cacheconfig.L2size)+10 - CACHE_L2.offsetL2;
     }
     
     
-    //2d vector for saving tags
-    vector<vector <string> > cacheL1_Tag(pow(2,CACHE_L1.indexL1) ,vector<string>(cacheconfig.L1setsize));
-    vector<vector <string> > cacheL2_Tag(pow(2,CACHE_L2.indexL2) ,vector<string>(cacheconfig.L2setsize));
+    //2-D vector for saving tags
+    vector<vector <string> > cacheL1_Tag(pow(2, CACHE_L1.indexL1) ,vector<string>(pow(2, cacheconfig.L1setsize)));
+    vector<vector <string> > cacheL2_Tag(pow(2, CACHE_L2.indexL2) ,vector<string>(pow(2, cacheconfig.L2setsize)));
     
-    
-    //2d vector for saving valid bits and dirty bits, VD[0] is valid bit, VD[1] is dirty bit
-    vector<vector <bitset<2>> > cacheL1_VD(pow(2,CACHE_L1.indexL1) ,vector<bitset<2>>(cacheconfig.L1setsize));
-    vector<vector <bitset<2>> > cacheL2_VD(pow(2,CACHE_L2.indexL2) ,vector<bitset<2>>(cacheconfig.L2setsize));
+    //number of tags should as same as the number of VD
+    //2-D vector for saving valid bits and dirty bits, VD[0] is valid bit, VD[1] is dirty bit
+    vector<vector <bitset<2>> > cacheL1_VD(pow(2, CACHE_L1.indexL1) ,vector<bitset<2>>(pow(2, cacheconfig.L1setsize)));
+    vector<vector <bitset<2>> > cacheL2_VD(pow(2, CACHE_L2.indexL2) ,vector<bitset<2>>(pow(2, cacheconfig.L2setsize)));
     
     
     
@@ -195,7 +195,7 @@ int main(){
     string xaddr;       // the address from the memory trace store in hex;
     unsigned int addr;  // the address from the memory trace store in unsigned int;
     bitset<32> accessaddr; // the address from the memory trace store in the bitset;
-    
+    //this is where the loop begins
     if (traces.is_open()&&tracesout.is_open()){
         while (getline (traces,line)){   // read mem access file and access Cache
             
@@ -230,13 +230,13 @@ int main(){
             
             while(i1!=CACHE_L1.indexL1){
                 L1temindex[i1]=accessaddr[i1+CACHE_L1.offsetL1];
-                i1+=1;
+                i1 += 1;
             }
             L1index=L1temindex.to_ulong();      //long int L1index
             
             while(i2!=CACHE_L2.indexL2){
                 L2temindex[i2]=accessaddr[i2+CACHE_L2.offsetL2];
-                i2+=1;
+                i2 += 1;
             }
             L2index=L2temindex.to_ulong();      //long int L2index
             
@@ -250,24 +250,24 @@ int main(){
                 //  and then L2 (if required),
                 //  update the L1 and L2 access state variable;
                 
-                while(waycount!=cacheconfig.L1setsize){
-                    if (TagL1==cacheL1_Tag[L1index][waycount] and cacheL1_VD[L1index][waycount][0]==1){
+                while(waycount != cacheconfig.L1setsize){
+                    if (TagL1 == cacheL1_Tag[L1index][waycount] and cacheL1_VD[L1index][waycount][0] == 1){
                         //if tag match and valid bit is 1
                         L1AcceState=RH;
                     }
                     waycount+=1;
                 }
-                if(L1AcceState==0){     //if accestate not change, it's a read miss, then access L2
+                if(L1AcceState == 0){     //if accestate not change, it's a read miss, then access L2
                     L1AcceState=RM;
                     waycount=0;         //reset counter
-                    while(waycount!=cacheconfig.L2setsize){
-                        if(TagL2==cacheL2_Tag[L2index][waycount] and cacheL2_VD[L2index][waycount][0]==1){
+                    while(waycount != cacheconfig.L2setsize){
+                        if(TagL2 == cacheL2_Tag[L2index][waycount] and cacheL2_VD[L2index][waycount][0] == 1){
                             //if tag match and valid bit is 1
                             L2AcceState=RH;
                         }
                         waycount+=1;
                     }
-                    if(L2AcceState==0){
+                    if(L2AcceState == 0){
                         L2AcceState=RM;
                     }
                 }
@@ -292,7 +292,7 @@ int main(){
                         }
                         cacheL1_Tag[L1index][cacheL1_evictcounter]=TagL1;  //save tag to L1[index][evictcounter]
                         
-                        cacheL1_VD[L1index][cacheL1_evictcounter][1]=0;    //modify the dirty bit to 0
+                        cacheL1_VD[L1index][cacheL1_evictcounter][1]=0;    //set the dirty bit to 0
                         
                         cacheL1_evictcounter += 1;
                     }
@@ -313,7 +313,7 @@ int main(){
                             cacheL1_evictcounter = 0;                       //roll over
                         }
                         cacheL1_Tag[L1index][cacheL1_evictcounter] = TagL1;
-                        cacheL1_VD[L1index][cacheL1_evictcounter][1] = 0;
+                        cacheL1_VD[L1index][cacheL1_evictcounter][1] = 0;   //set dirty bit to 0
                         cacheL1_evictcounter += 1;
                     }
                     
@@ -350,8 +350,8 @@ int main(){
                 //update the L1 and L2 access state variable;
                 
                 
-                while(waycount!=cacheconfig.L1setsize){
-                    if (TagL1==cacheL1_Tag[L1index][waycount] and cacheL1_VD[L1index][waycount][0]==1){
+                while(waycount != cacheconfig.L1setsize){
+                    if (TagL1 == cacheL1_Tag[L1index][waycount] and cacheL1_VD[L1index][waycount][0] == 1){
                         //it's a write hit
                         L1AcceState = WH;
                         cacheL1_VD[L1index][waycount][1]=1;   //write a new data, set dirty bit to 1
@@ -364,8 +364,8 @@ int main(){
                 if(L1AcceState==0){     //if L1 write miss, access L2
                     L1AcceState=WM;
                     waycount=0;         //reset waycount
-                    while(waycount!=cacheconfig.L2setsize){
-                        if(TagL2==cacheL2_Tag[L2index][waycount] and cacheL2_VD[L2index][waycount][0]==1){
+                    while(waycount != cacheconfig.L2setsize){
+                        if(TagL2 == cacheL2_Tag[L2index][waycount] and cacheL2_VD[L2index][waycount][0] == 1){
                             L2AcceState=WH;
                             cacheL2_VD[L2index][waycount][1]=1;
                             break;
