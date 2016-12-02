@@ -90,14 +90,14 @@ public:
 };
 
 
-//int main(int argc, char* argv[]){
-int main(){
+int main(int argc, char* argv[]){
+//int main(){
     
     config cacheconfig;
     ifstream cache_params;
     string dummyLine;
-    //cache_params.open(argv[1]);
-    cache_params.open("/Users/gpz/Desktop/Lab2New/Lab2New/cacheconfig.txt");
+    cache_params.open(argv[1]);
+    //cache_params.open("path");
     while(!cache_params.eof())  // read config file
     {
         cache_params>>dummyLine;                    //using for jumping the "L1" line
@@ -158,10 +158,10 @@ int main(){
     ifstream traces;
     ofstream tracesout;
     string outname;
-    //outname = string(argv[2]) + ".out";
-    outname = "/Users/gpz/Desktop/Lab2New/Lab2New/traceout.txt";
-    //traces.open(argv[2]);
-    traces.open("/Users/gpz/Desktop/Lab2New/Lab2New/trace.txt");
+    outname = string(argv[2]) + ".out";
+    //outname = "path";
+    traces.open(argv[2]);
+    //traces.open("path");
     tracesout.open(outname.c_str());
     
     string line;
